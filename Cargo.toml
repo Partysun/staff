@@ -1,0 +1,22 @@
+[package]
+name = "staff"
+version = "0.1.0"
+authors = ["Yura Zatsepin <yura@zatsepin.dev>"]
+edition = "2021"
+
+[lints.rust]
+unsafe_code = "forbid"
+unused = { level = "allow", priority = -1 } # For exploratory dev.
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+clap = { version = "4.5.9", features = ["derive"] }
+ollama-rs = { version = "0.2.0", features = ["stream"] }
+tokio-stream = { version = "0.1.15", optional = true }
+dirs = { version = "5.0.1" }
+regex = { version = "1.10.5" }
+
+[dev-dependencies]
+assert_cmd = "1"
+predicates = "2"
