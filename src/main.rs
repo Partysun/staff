@@ -17,7 +17,7 @@ use std::path::Path;
 use tokio::io::{stdout, AsyncWriteExt};
 use tokio::task;
 
-use llm::{a_generate_text, generate_text};
+use llm::{GigaChatStrategy, LLMStrategy, Llmka, OllamaStrategy};
 use utils::{get_or_create_config, read_spell};
 
 #[derive(Parser, Debug)]
@@ -46,6 +46,8 @@ enum Commands {
         words: Vec<String>,
         #[clap(long, default_value = "true")]
         stream: Option<bool>,
+        #[clap(short, long, default_value = "ollama/llama3")]
+        model: String,
     },
 }
 
@@ -116,9 +118,8 @@ async fn run(mut args: Cli) -> Result<(), Box<dyn std::error::Error>> {
             name,
             words,
             stream,
+            model,
         } => {
-            let ollama = Ollama::new("http://localhost".to_string(), 11435);
-            let model = "llama3:latest".to_string();
             let options = GenerationOptions::default()
                 .temperature(0.1)
                 .repeat_penalty(1.5)
@@ -126,13 +127,29 @@ async fn run(mut args: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 .top_p(0.25);
             let spell = read_spell(&name);
             println!("Grimoire: {:?}", name.unwrap());
-            println!("Magic: {:?}", spell);
-            let message: String = words.join(" ");
-            println!("Message: {:?}", message);
-            println!("\n");
-            match stream {
-                Some(true) => a_generate_text(ollama, model, spell, message, options).await?,
-                _ => generate_text(ollama, model, spell, message, options).await?,
+            // println!("Magic: {:?}", spell);
+            let messages: String = words.join(" ");
+            // println!("Message: {:?}", messages);
+            let stream = stream.unwrap_or(true);
+            println!("{}", model);
+            let re = Regex::new(r"^ollama\/(.*)").unwrap();
+            match re.captures(&model).map(|m| m.get(1)) {
+                Some(Some(x)) => {
+                    let model = x.as_str().to_string();
+                    println!("Model: {:?}", model);
+                    let llm = Llmka::new(OllamaStrategy {
+                        api_url: "http://localhost".to_string(),
+                        api_port: 11435,
+                        default_model: model,
+                        options,
+                    });
+                    llm.generate(messages, spell, stream).await;
+                } // llama3
+                _ if model == "giga" => {
+                    let llm = Llmka::new(GigaChatStrategy {});
+                    llm.generate(messages, spell, stream).await;
+                } // giga
+                _ => {}
             }
         }
     }

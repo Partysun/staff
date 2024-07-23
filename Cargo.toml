@@ -16,7 +16,9 @@ ollama-rs = { version = "0.2.0", features = ["stream"] }
 tokio-stream = { version = "0.1.15", optional = true }
 dirs = { version = "5.0.1" }
 regex = { version = "1.10.5" }
+async-gigachat = { version = "*" }
 
 [dev-dependencies]
 assert_cmd = "1"
 predicates = "2"
+tokio-test = "0.4.3"
