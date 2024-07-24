@@ -17,6 +17,7 @@ tokio-stream = { version = "0.1.15", optional = true }
 dirs = { version = "5.0.1" }
 regex = { version = "1.10.5" }
 async-gigachat = { version = "*" }
+markdown-meta-parser = "*"
 
 [dev-dependencies]
 assert_cmd = "1"

@@ -1,4 +1,5 @@
 use dirs::config_dir;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -38,9 +39,65 @@ pub fn read_spell(name: &Option<String>) -> String {
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
+struct Metadata<'a> {
+    author: &'a str,
+    title: &'a str,
+    tags: Vec<String>,
+}
+
+pub fn get_meta(content: String) {
+    let mut type_mark = HashMap::new();
+
+    type_mark.insert("tags".into(), "array");
+    type_mark.insert("released".into(), "bool");
+    type_mark.insert("author".into(), "string");
+    type_mark.insert("title".into(), "string");
+
+    let meta = markdown_meta_parser::MetaData {
+        content,
+        required: vec!["title".into()],
+        type_mark,
+    };
+
+    let meta_ast = meta.parse();
+    // meta_ast is a hashMap
+    let mut title: String = "".to_string();
+    let mut author: String = "".to_string();
+    let mut tags: Vec<String> = vec![];
+
+    for (els, _) in meta_ast.iter() {
+        println!("Els: {:?}", els);
+        println!("{:?}", els.get("title"));
+        match els.get("title") {
+            Some(t) => title = t.clone().as_string().unwrap(),
+            None => (),
+        }
+        match els.get("author") {
+            Some(a) => author = a.clone().as_string().unwrap(),
+            None => (),
+        }
+        match els.get("tags") {
+            Some(t) => tags = t.clone().as_array().unwrap(),
+            None => (),
+        }
+    }
+
+    println!("{}", title);
+    println!("{}", author);
+    println!("{:?}", tags);
+    println!("{:#?}", meta);
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_get_meta() {
+        let content = include_str!("../grimoires/ask_zelda.md").to_string();
+        get_meta(content);
+    }
 
     #[test]
     fn test_get_or_create_config_folder() {
