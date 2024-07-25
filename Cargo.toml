@@ -1,12 +1,17 @@
 [package]
-name = "staff"
-version = "0.1.0"
-authors = ["Yura Zatsepin <yura@zatsepin.dev>"]
+name = "staff-cli"
+version = "0.1.1"
+description = "Staff is a toolkit for dead-simple usage out of the box promts and llms in your project and command line."
+keywords = ["llm", "ai", "ollama"]
+categories = ["command-line-utilities", "api-bindings", "text-processing"]
+authors = ["Iurii Zatsepin <hi@zatsepin.dev>"]
 edition = "2021"
+default-run = "st"
+readme = "README.md"
 
 [lints.rust]
 unsafe_code = "forbid"
-unused = { level = "allow", priority = -1 } # For exploratory dev.
+unused = { level = "allow", priority = -1 }
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -18,6 +23,9 @@ dirs = { version = "5.0.1" }
 regex = { version = "1.10.5" }
 async-gigachat = { version = "*" }
 markdown-meta-parser = "*"
+figment = { version = "*", features = ["json", "yaml", "toml", "env"] }
+anyhow = { version = "*" }
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "1"

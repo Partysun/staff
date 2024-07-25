@@ -45,7 +45,6 @@ impl LLMStrategy for OllamaStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Generate OLLAMA");
         let ollama = Ollama::new(self.api_url.clone(), self.api_port);
         let options = GenerationOptions::default()
             .temperature(0.1)
@@ -70,7 +69,6 @@ impl LLMStrategy for OllamaStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Async Generate Ollama");
         let ollama = Ollama::new(self.api_url.clone(), self.api_port);
         let options = GenerationOptions::default()
             .temperature(0.1)
@@ -111,7 +109,6 @@ impl LLMStrategy for GigaChatStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Generate GIGACHAT");
         let config = GigaChatConfig::default();
         let client: Client = Client::with_config(config);
 
@@ -130,7 +127,7 @@ impl LLMStrategy for GigaChatStrategy {
             .unwrap();
 
         let response = Chat::new(client).completion(request).await.unwrap();
-        println!("{}", response.usage.total_tokens);
+        println!("Used tokens: {}", response.usage.total_tokens);
         let choice = response.choices.get(0).unwrap();
 
         println!("{}: {}", question.role.unwrap(), question.content);
@@ -147,7 +144,6 @@ impl LLMStrategy for GigaChatStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Async Generate GIGACHAT");
         let config = GigaChatConfig::default();
         let client: Client = Client::with_config(config);
 
