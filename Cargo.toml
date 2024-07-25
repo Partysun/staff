@@ -17,6 +17,9 @@ tokio-stream = { version = "0.1.15", optional = true }
 dirs = { version = "5.0.1" }
 regex = { version = "1.10.5" }
 async-gigachat = { version = "*" }
+figment = { version = "*", features = ["json", "yaml", "toml", "env"] }
+anyhow = { version = "*" }
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "1"

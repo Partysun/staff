@@ -1,6 +1,8 @@
+mod config;
 mod llm;
 mod utils;
 
+use anyhow::{bail, Error, Result};
 use clap::error::ContextKind;
 use clap::{Args, Parser, Subcommand};
 use futures::{StreamExt, TryFutureExt};
@@ -17,6 +19,7 @@ use std::path::Path;
 use tokio::io::{stdout, AsyncWriteExt};
 use tokio::task;
 
+use config::{Config, OllamaConfig};
 use llm::{GigaChatStrategy, LLMStrategy, Llmka, OllamaStrategy};
 use utils::{get_or_create_config, read_spell};
 
@@ -25,6 +28,10 @@ use utils::{get_or_create_config, read_spell};
 #[command(author = "Zatsepin Yura, https://zatsepin.dev")]
 #[command(version, about, long_about = None)]
 struct Cli {
+    // Path to a config file
+    #[arg(short, long)]
+    config: Option<String>,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -46,7 +53,7 @@ enum Commands {
         words: Vec<String>,
         #[clap(long, default_value = "true")]
         stream: Option<bool>,
-        #[clap(short, long, default_value = "ollama/llama3")]
+        #[clap(short, long, default_value = "ollama/llama3.1")]
         model: String,
     },
 }
@@ -57,8 +64,11 @@ enum GrimoireCommands {
 }
 
 #[tokio::main]
-async fn run(mut args: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    println!("{:?}", args);
+async fn run(mut args: Cli) -> Result<()> {
+    let cfg: Config = Config::parse(args.config).unwrap_or(Config {
+        ..Config::default()
+    });
+
     match args.command {
         Commands::Grimoires { command, list } => {
             match &command {
@@ -77,7 +87,7 @@ async fn run(mut args: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         match grimoire.ends_with(".md") {
                             true => (),
                             false => {
-                                eprintln!("This is not markdown file: '{grimoire:}'");
+                                eprintln!("This is not a markdown file: '{grimoire:}'");
                             }
                         }
                         let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
@@ -127,25 +137,28 @@ async fn run(mut args: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 .top_p(0.25);
             let spell = read_spell(&name);
             println!("Grimoire: {:?}", name.unwrap());
-            // println!("Magic: {:?}", spell);
             let messages: String = words.join(" ");
-            // println!("Message: {:?}", messages);
             let stream = stream.unwrap_or(true);
-            println!("{}", model);
             let re = Regex::new(r"^ollama\/(.*)").unwrap();
             match re.captures(&model).map(|m| m.get(1)) {
                 Some(Some(x)) => {
+                    if (cfg.ollama.is_none()) {
+                        bail!("You should provide Ollama configuration in the config file. See help -h or --help.");
+                    }
                     let model = x.as_str().to_string();
-                    println!("Model: {:?}", model);
+                    let ollama_cfg: OllamaConfig = cfg.ollama.unwrap();
                     let llm = Llmka::new(OllamaStrategy {
-                        api_url: "http://localhost".to_string(),
-                        api_port: 11435,
+                        api_url: ollama_cfg.api_url,   //"http://localhost".to_string(),
+                        api_port: ollama_cfg.api_port, //11435,
                         default_model: model,
                         options,
                     });
                     llm.generate(messages, spell, stream).await;
                 } // llama3
                 _ if model == "giga" => {
+                    if (cfg.giga.unwrap().auth_token.is_none()) {
+                        bail!("You should provide GigaChat configuration in the config file. See help -h or --help.");
+                    }
                     let llm = Llmka::new(GigaChatStrategy {});
                     llm.generate(messages, spell, stream).await;
                 } // giga
