@@ -21,7 +21,7 @@ use tokio::task;
 
 use config::{Config, OllamaConfig};
 use llm::{GigaChatStrategy, LLMStrategy, Llmka, OllamaStrategy};
-use utils::{get_or_create_config, read_spell};
+use utils::{download_file, get_meta, get_or_create_config, has_any_grimoires, read_spell};
 
 #[derive(Parser, Debug)]
 #[command(name = "staff")]
@@ -40,14 +40,12 @@ struct Cli {
 enum Commands {
     #[command(about = "List of available grimoires")]
     Grimoires {
-        #[clap(long, default_value = "true")]
-        list: Option<bool>,
         #[command(subcommand)]
         command: Option<GrimoireCommands>,
     },
     #[command()]
     Cast {
-        #[clap(short, long, default_value = "basic")]
+        #[clap(short, long, default_value = "zelda_talk")]
         name: Option<String>,
         #[clap(default_value = "why is the sky blue?")]
         words: Vec<String>,
@@ -60,7 +58,12 @@ enum Commands {
 
 #[derive(Debug, Subcommand)]
 enum GrimoireCommands {
+    #[command(about = "Add new grimoire from the local folder.\nGrimoire is a text md file.")]
     Add { grimoire: String },
+    #[command(about = "Show a list of available grimoires.")]
+    List,
+    #[command(about = "Explain how the grimoire works.")]
+    Explain { grimoire: String },
 }
 
 #[tokio::main]
@@ -69,8 +72,15 @@ async fn run(mut args: Cli) -> Result<()> {
         ..Config::default()
     });
 
+    if (!has_any_grimoires()) {
+        println!("---");
+        println!("No any grimoires yet. It's ok, we are creating for you one.");
+        println!("Your first grimoire is zelda_talk. Sounds anything like a Hyrule's tale");
+        println!("---");
+    }
+
     match args.command {
-        Commands::Grimoires { command, list } => {
+        Commands::Grimoires { command } => {
             match &command {
                 Some(GrimoireCommands::Add { grimoire }) => {
                     let re = Regex::new(r"^https?:\/\/").unwrap();
@@ -102,7 +112,14 @@ async fn run(mut args: Cli) -> Result<()> {
                         }
                     }
                 }
-                _ => {
+                Some(GrimoireCommands::Explain { grimoire }) => {
+                    let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
+                    grimoires_path.push(Path::new(&grimoire).with_extension("md"));
+                    let content = fs::read_to_string(grimoires_path).unwrap();
+                    let meta = get_meta(content);
+                    println!("Metadata: {} \n", meta)
+                }
+                Some(GrimoireCommands::List) | _ => {
                     println!("List of available grimoires: ");
                     let grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
                     // show all files in the folder without extension name
@@ -136,7 +153,7 @@ async fn run(mut args: Cli) -> Result<()> {
                 .top_k(25)
                 .top_p(0.25);
             let spell = read_spell(&name);
-            println!("Grimoire: {:?}", name.unwrap());
+            println!("Active Grimoire: {:?} \n", name.unwrap());
             let messages: String = words.join(" ");
             let stream = stream.unwrap_or(true);
             let re = Regex::new(r"^ollama\/(.*)").unwrap();
@@ -156,10 +173,14 @@ async fn run(mut args: Cli) -> Result<()> {
                     llm.generate(messages, spell, stream).await;
                 } // llama3
                 _ if model == "giga" => {
-                    if (cfg.giga.unwrap().auth_token.is_none()) {
-                        bail!("You should provide GigaChat configuration in the config file. See help -h or --help.");
-                    }
-                    let llm = Llmka::new(GigaChatStrategy {});
+                    let auth_token = match cfg.giga.unwrap().auth_token {
+                        Some(token) => token,
+                        None => {
+                            bail!("You should provide GigaChat configuration in the config file. See help -h or --help.");
+                        }
+                    };
+
+                    let llm = Llmka::new(GigaChatStrategy { auth_token });
                     llm.generate(messages, spell, stream).await;
                 } // giga
                 _ => {}

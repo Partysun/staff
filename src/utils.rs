@@ -1,10 +1,71 @@
 use dirs::config_dir;
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::Cursor;
 use std::path::Path;
 use std::path::PathBuf;
 
-const APPLICATION_NAME: &str = "staff";
+const APPLICATION_NAME: &str = env!("CARGO_PKG_NAME");
+
+// Usage:
+//
+// let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
+// grimoires_path.push(Path::new("zelda_talk.md"));
+// match download_file(
+//     "http link to your grimoire".to_string(),
+//     grimoires_path,
+// )
+// .await
+// {
+//     Ok(()) => println!("Downloaded new Grimoire"),
+//     Err(_) => eprintln!("Failed downloading a grimoire"),
+// }
+pub async fn download_file(url: String, file_name: PathBuf) -> Result<(), reqwest::Error> {
+    let response = reqwest::get(url).await?;
+    let mut file = std::fs::File::create(file_name).unwrap();
+    let mut content = Cursor::new(response.bytes().await?);
+    std::io::copy(&mut content, &mut file).unwrap();
+    Ok(())
+}
+
+fn create_initial_grimoires() {
+    let mut path = config_dir().map(|d| d.join(APPLICATION_NAME)).unwrap();
+    path.push("grimoires");
+    path.push("zelda_talk.md");
+    let mut initial_grimoire =
+        File::create(&path).expect("Error encountered while creating grimoire!");
+    initial_grimoire
+        .write_all(
+            b"---
+title: Zelda Talk
+author: Zatsepin <zatsepin.dev>
+tags: [fun]
+description: This spell makes your AI as a Hero from Hyrule. Pff. Tales are coming...
+---
+
+You are Link from Zelda, say answer as this hero
+
+INPUT:",
+        )
+        .expect("Error while writing to file");
+
+    let content = fs::read_to_string(path).unwrap();
+    let meta = get_meta(content);
+    println!("Metadata: {} \n", meta)
+}
+
+pub fn has_any_grimoires() -> bool {
+    let mut path = config_dir().map(|d| d.join(APPLICATION_NAME)).unwrap();
+    path.push("grimoires");
+    match fs::metadata(&path) {
+        Ok(_) => true, // Path exists and it is a directory
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => false, // Directory does not exist
+        Err(e) => panic!("An error occurred: {}", e), // Another problem occurred (i.e., file/disk may be full etc.)
+    }
+}
 
 pub fn get_or_create_config(folder: Option<&str>) -> Option<PathBuf> {
     let config_dir = config_dir().unwrap();
@@ -18,6 +79,11 @@ pub fn get_or_create_config(folder: Option<&str>) -> Option<PathBuf> {
             }
             if !path.exists() || !path.is_dir() {
                 fs::create_dir_all(&path).expect("Failed to create directory");
+                // If we are creating first time the grimoires
+                // folder, we should to create a first grimoire
+                if (folder.unwrap() == "grimoires") {
+                    create_initial_grimoires();
+                }
             }
             Some(path)
         }
@@ -29,7 +95,7 @@ pub fn read_spell(name: &Option<String>) -> String {
     let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
     match name {
         Some(n) => grimoires_path.push(Path::new(&n).with_extension("md")),
-        None => grimoires_path.push(Path::new("basic.md")),
+        None => grimoires_path.push(Path::new("zelda_talk.md")),
     };
     if Path::new(&grimoires_path).exists() {
         fs::read_to_string(grimoires_path).expect("Something went wrong reading the file")
@@ -39,14 +105,25 @@ pub fn read_spell(name: &Option<String>) -> String {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
-struct Metadata<'a> {
-    author: &'a str,
-    title: &'a str,
+#[derive(Debug)]
+pub struct GrimoireMetadata {
+    author: String,
+    title: String,
     tags: Vec<String>,
+    description: String,
 }
 
-pub fn get_meta(content: String) {
+impl fmt::Display for GrimoireMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "\n Author: {} \n Title: {} \n Tags: {:?} \n Description: {}",
+            self.author, self.title, self.tags, self.description
+        )
+    }
+}
+
+pub fn get_meta(content: String) -> GrimoireMetadata {
     let mut type_mark = HashMap::new();
 
     type_mark.insert("tags".into(), "array");
@@ -61,32 +138,24 @@ pub fn get_meta(content: String) {
     };
 
     let meta_ast = meta.parse();
-    // meta_ast is a hashMap
-    let mut title: String = "".to_string();
-    let mut author: String = "".to_string();
+    let mut title: String = "Untitled".to_string();
+    let mut author: String = "Who'knows guy".to_string();
+    let mut description: String = "No description is avaible".to_string();
     let mut tags: Vec<String> = vec![];
 
     for (els, _) in meta_ast.iter() {
-        println!("Els: {:?}", els);
-        println!("{:?}", els.get("title"));
-        match els.get("title") {
-            Some(t) => title = t.clone().as_string().unwrap(),
-            None => (),
-        }
-        match els.get("author") {
-            Some(a) => author = a.clone().as_string().unwrap(),
-            None => (),
-        }
-        match els.get("tags") {
-            Some(t) => tags = t.clone().as_array().unwrap(),
-            None => (),
-        }
+        title = els.get("title").unwrap().clone().as_string().unwrap();
+        author = els.get("author").unwrap().clone().as_string().unwrap();
+        description = els.get("description").unwrap().clone().as_string().unwrap();
+        tags = els.get("tags").unwrap().clone().as_array().unwrap();
     }
 
-    println!("{}", title);
-    println!("{}", author);
-    println!("{:?}", tags);
-    println!("{:#?}", meta);
+    GrimoireMetadata {
+        title,
+        author,
+        tags,
+        description,
+    }
 }
 
 #[cfg(test)]
@@ -96,7 +165,8 @@ mod test {
     #[test]
     fn test_get_meta() {
         let content = include_str!("../grimoires/ask_zelda.md").to_string();
-        get_meta(content);
+        let meta = get_meta(content);
+        assert_eq!(meta.title, "Zelda Voice");
     }
 
     #[test]

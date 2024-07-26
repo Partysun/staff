@@ -97,10 +97,13 @@ impl LLMStrategy for OllamaStrategy {
 }
 
 pub struct GigaChatStrategy {
-    // pub auth_token: String,
+    pub auth_token: String,
+    //TODO: add more settings for GigaChat
     // pub scope: String,
     // pub auth_url: String,
     // pub api_base_url: String,
+    // pub model: String,
+    // pub options: GenerationOptions,
 }
 
 impl LLMStrategy for GigaChatStrategy {
@@ -109,7 +112,9 @@ impl LLMStrategy for GigaChatStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let config = GigaChatConfig::default();
+        let config = GigaChatConfig::builder()
+            .auth_token(&self.auth_token)
+            .build();
         let client: Client = Client::with_config(config);
 
         let question = ChatMessageBuilder::default()
@@ -144,7 +149,9 @@ impl LLMStrategy for GigaChatStrategy {
         messages: String,
         grimoire_text: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let config = GigaChatConfig::default();
+        let config = GigaChatConfig::builder()
+            .auth_token(&self.auth_token)
+            .build();
         let client: Client = Client::with_config(config);
 
         let question = ChatMessageBuilder::default()
@@ -239,14 +246,6 @@ mod tests {
             options,
         });
 
-        llm.generate(
-            "Check".to_string(),
-            "You are Link from Zelda.".to_string(),
-            false,
-        )
-        .await;
-
-        let llm = Llmka::new(GigaChatStrategy {});
         llm.generate(
             "Check".to_string(),
             "You are Link from Zelda.".to_string(),
