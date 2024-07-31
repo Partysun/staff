@@ -26,4 +26,4 @@ For GIGA users
 
 Install certificates
 
-- https://developers.sber.ru/docs/ru/gigachat/certificates
+https://www.gosuslugi.ru/crt

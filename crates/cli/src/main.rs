@@ -156,7 +156,7 @@ async fn run(mut args: Cli) -> Result<()> {
                 .repeat_penalty(1.5)
                 .top_k(25)
                 .top_p(0.25);
-            let spell = read_spell(&name);
+            let (_, system_prompt, user_prompt) = read_spell(&name).unwrap();
             println!("Active Grimoire: {:?} \n", name.unwrap());
             let messages: String = words.join(" ");
             let stream = stream.unwrap_or(true);
@@ -174,7 +174,8 @@ async fn run(mut args: Cli) -> Result<()> {
                         default_model: model,
                         options,
                     });
-                    llm.generate(messages, spell, stream).await;
+                    llm.generate(messages, system_prompt, user_prompt, stream)
+                        .await;
                 } // llama3
                 _ if model == "giga" => {
                     let auth_token = match cfg.giga.unwrap().auth_token {
@@ -185,7 +186,8 @@ async fn run(mut args: Cli) -> Result<()> {
                     };
 
                     let llm = Llmka::new(GigaChatStrategy { auth_token });
-                    llm.generate(messages, spell, stream).await;
+                    llm.generate(messages, system_prompt, user_prompt, stream)
+                        .await;
                 } // giga
                 _ => {}
             }

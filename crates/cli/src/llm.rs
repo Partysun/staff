@@ -23,12 +23,14 @@ pub trait LLMStrategy {
     async fn generate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>>;
     async fn agenerate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
@@ -43,7 +45,8 @@ impl LLMStrategy for OllamaStrategy {
     async fn generate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let ollama = Ollama::new(self.api_url.clone(), self.api_port);
         let options = GenerationOptions::default()
@@ -54,7 +57,7 @@ impl LLMStrategy for OllamaStrategy {
         let res = ollama
             .generate(
                 GenerationRequest::new(self.default_model.clone(), messages)
-                    .system(grimoire_text)
+                    .system(system_prompt)
                     .options(options),
             )
             .await;
@@ -67,7 +70,8 @@ impl LLMStrategy for OllamaStrategy {
     async fn agenerate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let ollama = Ollama::new(self.api_url.clone(), self.api_port);
         let options = GenerationOptions::default()
@@ -78,7 +82,7 @@ impl LLMStrategy for OllamaStrategy {
         let mut stream = ollama
             .generate_stream(
                 GenerationRequest::new(self.default_model.clone(), messages)
-                    .system(grimoire_text)
+                    .system(system_prompt)
                     .options(options),
             )
             .await
@@ -110,7 +114,8 @@ impl LLMStrategy for GigaChatStrategy {
     async fn generate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let config = GigaChatConfig::builder()
             .auth_token(&self.auth_token)
@@ -119,7 +124,7 @@ impl LLMStrategy for GigaChatStrategy {
 
         let question = ChatMessageBuilder::default()
             .role(Role::System)
-            .content(grimoire_text)
+            .content(system_prompt)
             .role(Role::User)
             .content(messages)
             .build()
@@ -147,7 +152,8 @@ impl LLMStrategy for GigaChatStrategy {
     async fn agenerate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let config = GigaChatConfig::builder()
             .auth_token(&self.auth_token)
@@ -156,7 +162,7 @@ impl LLMStrategy for GigaChatStrategy {
 
         let question = ChatMessageBuilder::default()
             .role(Role::System)
-            .content(grimoire_text)
+            .content(system_prompt)
             .role(Role::User)
             .content(messages)
             .build()
@@ -207,18 +213,19 @@ impl<T: LLMStrategy> Llmka<T> {
     pub async fn generate(
         &self,
         messages: String,
-        grimoire_text: String,
+        system_prompt: String,
+        user_prompt: String,
         stream: bool,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match stream {
             true => self
                 .llm_strategy
-                .agenerate(messages, grimoire_text)
+                .agenerate(messages, system_prompt, user_prompt)
                 .await
                 .unwrap(),
             false => self
                 .llm_strategy
-                .generate(messages, grimoire_text)
+                .generate(messages, system_prompt, user_prompt)
                 .await
                 .unwrap(),
         }
@@ -249,6 +256,7 @@ mod tests {
         llm.generate(
             "Check".to_string(),
             "You are Link from Zelda.".to_string(),
+            "".to_string(),
             false,
         )
         .await;

@@ -1,4 +1,5 @@
 use dirs::config_dir;
+use staff_core::parse_content;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs;
@@ -91,17 +92,22 @@ pub fn get_or_create_config(folder: Option<&str>) -> Option<PathBuf> {
     }
 }
 
-pub fn read_spell(name: &Option<String>) -> String {
+pub fn read_spell(name: &Option<String>) -> Option<(GrimoireMetadata, String, String)> {
     let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
     match name {
         Some(n) => grimoires_path.push(Path::new(&n).with_extension("md")),
         None => grimoires_path.push(Path::new("zelda_talk.md")),
     };
     if Path::new(&grimoires_path).exists() {
-        fs::read_to_string(grimoires_path).expect("Something went wrong reading the file")
+        let content =
+            fs::read_to_string(grimoires_path).expect("Something went wrong reading the file");
+        let meta = get_meta(content.clone());
+        let (system, user) = parse_content(content);
+        Some((meta, system, user))
+        // fs::read_to_string(grimoires_path).expect("Something went wrong reading the file")
     } else {
         println!("Spell not found!");
-        "".to_string()
+        None
     }
 }
 
