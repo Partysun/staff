@@ -130,6 +130,7 @@ pub fn get_meta(content: String) -> GrimoireMetadata {
     type_mark.insert("released".into(), "bool");
     type_mark.insert("author".into(), "string");
     type_mark.insert("title".into(), "string");
+    type_mark.insert("description".into(), "string");
 
     let meta = markdown_meta_parser::MetaData {
         content,
@@ -144,10 +145,22 @@ pub fn get_meta(content: String) -> GrimoireMetadata {
     let mut tags: Vec<String> = vec![];
 
     for (els, _) in meta_ast.iter() {
-        title = els.get("title").unwrap().clone().as_string().unwrap();
-        author = els.get("author").unwrap().clone().as_string().unwrap();
-        description = els.get("description").unwrap().clone().as_string().unwrap();
-        tags = els.get("tags").unwrap().clone().as_array().unwrap();
+        title = match els.get("title") {
+            Some(desc) => desc.clone().as_string().unwrap(),
+            None => "Untitled".to_string(),
+        };
+        author = match els.get("author") {
+            Some(desc) => desc.clone().as_string().unwrap(),
+            None => "Who'knows guy".to_string(),
+        };
+        description = match els.get("description") {
+            Some(desc) => desc.clone().as_string().unwrap(),
+            None => "No description is avaible".to_string(),
+        };
+        tags = match els.get("tags") {
+            Some(desc) => desc.clone().as_array().unwrap(),
+            None => vec![],
+        };
     }
 
     GrimoireMetadata {
@@ -164,8 +177,8 @@ mod test {
 
     #[test]
     fn test_get_meta() {
-        let content = include_str!("../grimoires/ask_zelda.md").to_string();
-        let meta = get_meta(content);
+        let content = include_str!("../../../grimoires/ask_zelda.md").to_string();
+        let meta = get_meta(content.clone());
         assert_eq!(meta.title, "Zelda Voice");
     }
 

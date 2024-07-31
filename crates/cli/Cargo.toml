@@ -1,0 +1,38 @@
+[package]
+name = "staff"
+version = "0.1.1"
+description = "Staff is a toolkit for dead-simple usage out of the box promts and llms in your project and command line."
+keywords = ["llm", "ai", "ollama"]
+categories = ["command-line-utilities", "api-bindings", "text-processing"]
+authors = ["Iurii Zatsepin <hi@zatsepin.dev>"]
+edition = "2021"
+readme = "../../README.md"
+
+[[bin]]
+name = "staff-cli"
+path = "src/main.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+unused = { level = "allow", priority = -1 }
+
+[dependencies]
+staff-core.workspace = true
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+clap = { version = "4.5.9", features = ["derive"] }
+ollama-rs = { version = "0.2.0", features = ["stream"] }
+tokio-stream = { version = "0.1.15", optional = true }
+dirs = { version = "5.0.1" }
+regex = { version = "1.10.5" }
+async-gigachat = { git = "https://github.com/Partysun/async-gigachat.git" }
+markdown-meta-parser = "*"
+figment = { version = "*", features = ["json", "yaml", "toml", "env"] }
+anyhow = { version = "*" }
+serde = { version = "1", features = ["derive"] }
+reqwest = { version = "*" }
+
+[dev-dependencies]
+assert_cmd = "1"
+predicates = "2"
+tokio-test = "0.4.3"

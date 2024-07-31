@@ -21,6 +21,7 @@ use tokio::task;
 
 use config::{Config, OllamaConfig};
 use llm::{GigaChatStrategy, LLMStrategy, Llmka, OllamaStrategy};
+use staff_core::parse_content;
 use utils::{download_file, get_meta, get_or_create_config, has_any_grimoires, read_spell};
 
 #[derive(Parser, Debug)]
@@ -116,8 +117,11 @@ async fn run(mut args: Cli) -> Result<()> {
                     let mut grimoires_path = get_or_create_config(Some("grimoires")).unwrap();
                     grimoires_path.push(Path::new(&grimoire).with_extension("md"));
                     let content = fs::read_to_string(grimoires_path).unwrap();
-                    let meta = get_meta(content);
-                    println!("Metadata: {} \n", meta)
+                    let meta = get_meta(content.clone());
+                    let (system, user) = parse_content(content);
+                    println!("Metadata: {} \n", meta);
+                    println!("System prompt: {} \n", system);
+                    println!("User prompt: {} \n", user);
                 }
                 Some(GrimoireCommands::List) | _ => {
                     println!("List of available grimoires: ");

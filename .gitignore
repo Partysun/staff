@@ -1,2 +1,13 @@
 /target
-/.venv
+.venv
+crates/cli/target/
+crates/core/target/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# dotenv environment variables file
+.env
+.env.test
