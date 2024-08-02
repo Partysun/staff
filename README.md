@@ -44,13 +44,25 @@ Or you can build ast-grep from source. You need to install rustup, clone the rep
 cargo install --path ./crates/cli --locked
 
 
+## CONFIGURATION
+
+The Staff reads your configuration from .config. Example of configuration is config.example.toml
+Right now Staff supports Ollama models and GigaChat models. You must provide credentials for at least one model.
+
+Read the file config.example.toml, write your configuration and copy it to $HOME/.config/staff-cli/config.toml
+
+// Lin: Some(/home/alice/.config/staff-cli/config.toml)
+// Win: Some(C:\Users\Alice\AppData\Roaming\staff-cli\config.toml)
+// Mac: Some(/Users/Alice/Library/Application Support/staff-cli/config.toml)
+
 ## USAGE
 
 How to get ideas from the youtube video? You need to have installed [youtube_transcript_api](https://github.com/jdepoix/youtube-transcript-api)
 
+
 ```bash
 youtube_transcript_api TY0o3Zs8u78 --languages en --format text | tr '\n' ' ' | xargs cargo run -- cast -n extract_wisdom
-````
+```
 
 ## FOR CONTRIBUTORS
 
@@ -65,3 +77,4 @@ sudo apt-get install libssl-dev
 Install certificates
 
 https://www.gosuslugi.ru/crt
+````
