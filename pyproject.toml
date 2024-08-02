@@ -5,7 +5,21 @@ build-backend = "maturin"
 [project]
 name = "staff-cli"
 version = "0.1.1"
-description = "A toolkit for LLM."
+authors = [
+  { name = "Iurii Zatsepin", email = "522287+Partysun@users.noreply.github.com" },
+]
+description = "Staff is a toolkit for dead-simple usage out of the box promts and llms in your project and command line."
+keywords = ["llm", "ai", "ollama"]
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+  "Environment :: Console",
+  "Programming Language :: Rust",
+  "Topic :: Text Processing",
+]
+
+[project.urls]
+Repository = "https://github.com/Partysun/staff"
 
 [tool.maturin]
 bindings = "bin"

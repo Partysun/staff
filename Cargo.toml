@@ -1,17 +1,14 @@
 [workspace.package]
-version = "0.1.1"            #:version
+version = "0.1.1"                                                                                                         #:version
 license = "Unlicense OR MIT"
+description = "Staff is a toolkit for dead-simple usage out of the box promts and llms in your project and command line."
+keywords = ["llm", "ai", "ollama"]
+categories = ["command-line-utilities", "api-bindings", "text-processing"]
+authors = ["Iurii Zatsepin <522287+Partysun@users.noreply.github.com>"]
 edition = "2021"
+repository = "https://github.com/Partysun/staff"
+readme = "README.md"
 
-# [[bin]]
-# bench = false
-# path = "crates/cli/src/main.rs"
-# name = "staff-cli"
-#
-# [[test]]
-# name = "integration"
-# path = "crates/cli/tests/cli.rs"
-#
 [workspace]
 members = ["crates/*"]
 resolver = "2"
