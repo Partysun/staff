@@ -46,13 +46,16 @@ cargo install --path ./crates/cli --locked
 
 ## CONFIGURATION
 
-The Staff reads your configuration from .config. Example of configuration is config.example.toml
+The Staff reads your configuration from .config. Example of configuration is config.example.toml.
+
 Right now Staff supports Ollama models and GigaChat models. You must provide credentials for at least one model.
 
 Read the file config.example.toml, write your configuration and copy it to $HOME/.config/staff-cli/config.toml
 
 // Lin: Some(/home/alice/.config/staff-cli/config.toml)
+
 // Win: Some(C:\Users\Alice\AppData\Roaming\staff-cli\config.toml)
+
 // Mac: Some(/Users/Alice/Library/Application Support/staff-cli/config.toml)
 
 ## USAGE
