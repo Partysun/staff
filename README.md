@@ -40,9 +40,9 @@ pip install staff-cli
 
 Or you can build ast-grep from source. You need to install rustup, clone the repository and then
 
-````bash
+```bash
 cargo install --path ./crates/cli --locked
-
+```
 
 ## CONFIGURATION
 
@@ -59,7 +59,6 @@ Read the file config.example.toml, write your configuration and copy it to $HOME
 
 How to get ideas from the youtube video? You need to have installed [youtube_transcript_api](https://github.com/jdepoix/youtube-transcript-api)
 
-
 ```bash
 youtube_transcript_api TY0o3Zs8u78 --languages en --format text | tr '\n' ' ' | xargs cargo run -- cast -n extract_wisdom
 ```
@@ -74,7 +73,4 @@ On UBUNTU/DEBIAN we need to install libssl-dev
 sudo apt-get install libssl-dev
 ```
 
-Install certificates
-
-https://www.gosuslugi.ru/crt
-````
+Install certificates from `https://www.gosuslugi.ru/crt`
