@@ -38,7 +38,7 @@ pip install staff-cli
 # cargo install staff-cli --locked # Not available yet. Yep, rust project can be installed only using pip yet :)
 ```
 
-Or you can build ast-grep from source. You need to install rustup, clone the repository and then
+Or you can build staff-cli from source. You need to install rustup, clone the repository and then
 
 ```bash
 cargo install --path ./crates/cli --locked
