@@ -1,7 +1,23 @@
 const PATTERN_SYSTEM: &str = "[//]: # (SYSTEM)\n";
 const PATTERN_USER: &str = "[//]: # (USER)\n";
 
+fn cut_meta(content: String) -> String {
+    let indices: Vec<(usize, &str)> = content.match_indices("---").collect();
+    if indices.len() < 2 {
+        return content;
+    }
+    if indices.first().unwrap().1 != "---" {
+        return content;
+    }
+    if indices.get(1).unwrap().1 != "---" {
+        return content;
+    }
+    let start = indices.get(1).unwrap().0;
+    content[start + 4..].to_string()
+}
+
 pub fn parse_content(content: String) -> (String, String) {
+    let content = cut_meta(content);
     let system_idx = content.find(PATTERN_SYSTEM);
     let user_idx = content.find(PATTERN_USER);
 
@@ -64,5 +80,17 @@ mod tests {
         );
         assert_eq!(system, "System content");
         assert_eq!(user, "User content sdf");
+    }
+
+    #[test]
+    fn test_cut_meta() {
+        let new_content = cut_meta("Check\n[//]: # (SYSTEM)\nSystem content".to_string());
+        assert_eq!(
+            new_content,
+            "Check\n[//]: # (SYSTEM)\nSystem content".to_string()
+        );
+
+        let new_content = cut_meta("---\n[//]: # (SYSTEM)\n---\nasdfas".to_string());
+        assert_eq!(new_content, "asdfas".to_string());
     }
 }

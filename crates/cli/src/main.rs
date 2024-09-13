@@ -178,14 +178,15 @@ async fn run(mut args: Cli) -> Result<()> {
                         .await;
                 } // llama3
                 _ if model == "giga" => {
-                    let auth_token = match cfg.giga.unwrap().auth_token {
+                    let config = cfg.giga.unwrap();
+                    let auth_token = match config.auth_token {
                         Some(token) => token,
                         None => {
                             bail!("You should provide GigaChat configuration in the config file. See help -h or --help.");
                         }
                     };
-
-                    let llm = Llmka::new(GigaChatStrategy { auth_token });
+                    let scope = config.scope.unwrap_or("GIGACHAT_API_PERS".to_string());
+                    let llm = Llmka::new(GigaChatStrategy { auth_token, scope });
                     llm.generate(messages, system_prompt, user_prompt, stream)
                         .await;
                 } // giga

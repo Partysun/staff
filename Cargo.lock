@@ -1722,6 +1722,7 @@ dependencies = [
  "regex",
  "reqwest 0.12.5",
  "serde",
+ "serde_json",
  "staff-core",
  "tokio",
  "tokio-stream",

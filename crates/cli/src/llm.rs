@@ -5,6 +5,7 @@ use ollama_rs::{
     generation::completion::request::GenerationRequest, generation::options::GenerationOptions,
     Ollama,
 };
+use serde::{Deserialize, Serialize};
 use std::fmt::format;
 use std::fs;
 use std::io::Write;
@@ -12,7 +13,10 @@ use tokio::io::{stdout, AsyncWriteExt};
 use tokio::task;
 
 use async_gigachat::{
-    chat::{Chat, ChatCompletionRequestBuilder, ChatCompletionResponse, ChatMessageBuilder, Role},
+    chat::{
+        Chat, ChatCompletionRequestBuilder, ChatCompletionResponse, ChatMessage,
+        ChatMessageBuilder, Role,
+    },
     client::Client,
     config::GigaChatConfig,
     result,
@@ -102,8 +106,8 @@ impl LLMStrategy for OllamaStrategy {
 
 pub struct GigaChatStrategy {
     pub auth_token: String,
+    pub scope: String,
     //TODO: add more settings for GigaChat
-    // pub scope: String,
     // pub auth_url: String,
     // pub api_base_url: String,
     // pub model: String,
@@ -119,6 +123,7 @@ impl LLMStrategy for GigaChatStrategy {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let config = GigaChatConfig::builder()
             .auth_token(&self.auth_token)
+            .scope(&self.scope)
             .build();
         let client: Client = Client::with_config(config);
 
@@ -157,23 +162,35 @@ impl LLMStrategy for GigaChatStrategy {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let config = GigaChatConfig::builder()
             .auth_token(&self.auth_token)
+            .scope(&self.scope)
             .build();
         let client: Client = Client::with_config(config);
 
-        let question = ChatMessageBuilder::default()
-            .role(Role::System)
-            .content(system_prompt)
-            .role(Role::User)
-            .content(messages)
-            .build()
-            .unwrap();
+        let mut _messages: Vec<ChatMessage> = vec![];
+
+        _messages.push(
+            ChatMessageBuilder::default()
+                .role(Role::System)
+                .content(system_prompt.clone())
+                .build()?,
+        );
+
+        _messages.push(
+            ChatMessageBuilder::default()
+                .role(Role::User)
+                .content(messages)
+                .build()?,
+        );
 
         let request = ChatCompletionRequestBuilder::default()
-            .messages(vec![question.clone()])
-            .model("GigaChat:latest")
+            .messages(_messages)
+            // .model("GigaChat:latest")
+            .model("GigaChat-Pro")
             .stream(true)
             .build()
             .unwrap();
+
+        // println!("{:?}", serde_json::to_string_pretty(&request)?);
 
         let mut stream = Chat::new(client).completion_stream(request).await.unwrap();
         // println!("{}", response.usage.total_tokens);

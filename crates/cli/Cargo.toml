@@ -36,6 +36,7 @@ figment = { version = "*", features = ["json", "yaml", "toml", "env"] }
 anyhow = { version = "*" }
 serde = { version = "1", features = ["derive"] }
 reqwest = { version = "*" }
+serde_json = "1.0.108"
 
 [dev-dependencies]
 assert_cmd = "1"
